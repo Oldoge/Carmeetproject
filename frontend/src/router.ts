@@ -2,9 +2,11 @@
 import CarFestival from './components/CarFestival.vue'
 import Login from './components/Login.vue'
 import Register from './components/Register.vue'
-import AdminPanel from './components/admin/Dashboard.vue'
+
 import EventDetails from './components/EventDetails.vue'
 import { useAuthStore } from './stores/auth'
+import AdminPanel2 from './components/admin/dash1.vue';
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,15 +23,16 @@ const router = createRouter({
       path: '/register',
       component: Register
     },
-    {
-      path: '/admin',
-      component: AdminPanel,
-      meta: { requiresAdmin: true }
-    },
+    
     {
       path: '/event/:id',
       component: EventDetails,
       props: true
+    },
+    {
+      path: '/adminDASH',
+      name: 'admindashboard',
+      component: AdminPanel2,
     }
   ]
 })

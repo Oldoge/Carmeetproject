@@ -13,9 +13,13 @@ return new class extends Migration
     {
         Schema::create('car_shows', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('location');
-            $table->date('event_date');
+            $table->string('title');
+            $table->string('picture')->nullable();
+            $table->string('organizer')->nullable();
+            $table->date('event_date')->nullable();
+            $table->dateTime('event_date_START')->nullable();
+            $table->dateTime('event_date_END')->nullable();
+            $table->string('location')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
         });
