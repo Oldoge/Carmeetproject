@@ -1,149 +1,37 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import ImageSlider from './ImageSlider.vue'
+import axios from 'axios'
 
 const router = useRouter()
 
-interface Festival {
-  id: number
-  name: string
-  organizer: string
-  dates: string
-  time: string
+type Festival = {
+  id: number;
+  title: string;
+  organizer: string;
+  dates: string;
+  time: string;
   location: {
-    venue: string
-    address: string
-    city: string
-  }
-  description: string
-  interestedCount: number
-  goingCount: number
-  images: Array<{
-    url: string
-    alt: string
-  }>
-}
+    venue: string;
+    address: string;
+    city: string;
+  };
+  description: string;
+};
 
-const festivals = ref<Festival[]>([
-  {
-    id: 1,
-    name: "MotorMania 2024",
-    organizer: "MotorMania Events & Classic Car Club Association",
-    dates: "August 15-17, 2024",
-    time: "10:00 AM - 8:00 PM",
-    location: {
-      venue: "Central Exhibition Center",
-      address: "123 Motorway Avenue",
-      city: "Los Angeles, CA"
-    },
-    description: "Join us for the most spectacular car festival of the year! MotorMania 2024 brings together classic cars, modern supercars, and innovative concept vehicles. Experience live demonstrations, meet car enthusiasts, enjoy food trucks, and participate in exclusive workshops with automotive experts.",
-    interestedCount: 0,
-    goingCount: 0,
-    images: [
-      {
-        url: "",
-        alt: "Luxury sports car at sunset"
-      },
-      {
-        url: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=800",
-        alt: "Classic car exhibition"
-      },
-      {
-        url: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800",
-        alt: "Vintage car showcase"
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "Vintage Auto Show 2024",
-    organizer: "Classic Car Preservation Society",
-    dates: "June 22-24, 2024",
-    time: "9:00 AM - 6:00 PM",
-    location: {
-      venue: "Heritage Park",
-      address: "456 Classic Drive",
-      city: "San Francisco, CA"
-    },
-    description: "Step back in time with our annual Vintage Auto Show! Featuring pristine classic cars from the 1920s to 1970s, restoration workshops, period-correct exhibitions, and classic car auctions. Special focus on American and European classics.",
-    interestedCount: 0,
-    goingCount: 0,
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1566013656433-e818796d04f7?auto=format&fit=crop&w=800",
-        alt: "Classic American car"
-      },
-      {
-        url: "https://images.unsplash.com/photo-1591293835940-934a7c4f2d9b?auto=format&fit=crop&w=800",
-        alt: "Vintage European automobile"
-      },
-      {
-        url: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800",
-        alt: "Retro car meeting"
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: "Future Motors Expo 2024",
-    organizer: "Tech Automotive Association",
-    dates: "October 5-7, 2024",
-    time: "10:00 AM - 9:00 PM",
-    location: {
-      venue: "Innovation Center",
-      address: "789 Technology Blvd",
-      city: "Austin, TX"
-    },
-    description: "Experience the future of automotive technology! Showcasing electric vehicles, autonomous cars, sustainable mobility solutions, and cutting-edge automotive innovations. Features interactive demos, test drives, and talks from industry leaders.",
-    interestedCount: 0,
-    goingCount: 0,
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=800",
-        alt: "Electric vehicle showcase"
-      },
-      {
-        url: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800",
-        alt: "Modern electric car interior"
-      },
-      {
-        url: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=800",
-        alt: "Future concept car"
-      }
-    ]
-  }
-])
+const festivals = ref<Festival[]>([])
 
-const handleInterested = (festivalId: number) => {
-  const festival = festivals.value.find(f => f.id === festivalId)
-  if (festival) {
-    festival.interestedCount++
-  }
-}
-
-const handleGoing = (festivalId: number) => {
-  const festival = festivals.value.find(f => f.id === festivalId)
-  if (festival) {
-    festival.goingCount++
-  }
-}
-
-const handleShare = async (festival: Festival) => {
+onMounted(async () => {
   try {
-    await navigator.share({
-      title: festival.name,
-      text: `Join us at ${festival.name}! ${festival.description}`,
-      url: window.location.href
-    })
-  } catch (err) {
-    alert('Share this page URL with your friends!')
+    const response = await axios.get('http://127.0.0.1:8000/api/car-shows');
+    console.log('API Response:', response.data); // Log the entire response data
+    festivals.value = response.data; // Directly assign the array to festivals.value
+    console.log('Fetched car shows:', festivals.value);
+  } catch (error) {
+    console.error('Error fetching car shows:', error);
   }
-}
+});
 
-const navigateToDetails = (festivalId: number) => {
-  router.push(`/event/${festivalId}`)
-}
 </script>
 
 <template>
@@ -152,9 +40,9 @@ const navigateToDetails = (festivalId: number) => {
     
     <div class="festivals-grid">
       <div v-for="festival in festivals" :key="festival.id" class="festival-card">
-        <h2 class="festival-title">{{ festival.name }}</h2>
+        <h2 class="festival-title">{{ festival.title }}</h2>
         
-        <ImageSlider :images="festival.images" />
+        
         
         <div class="festival-info">
           <div class="info-section">
@@ -182,18 +70,17 @@ const navigateToDetails = (festivalId: number) => {
         </div>
 
         <div class="action-buttons">
-          <button @click="handleGoing(festival.id)" class="btn going">
+          <button class="btn going">
             I'm in
-            <span v-if="festival.goingCount > 0" class="counter">{{ festival.goingCount }}</span>
+
           </button>
-          <button @click="handleInterested(festival.id)" class="btn interested">
+          <button  class="btn interested">
             Interesting
-            <span v-if="festival.interestedCount > 0" class="counter">{{ festival.interestedCount }}</span>
-          </button>
-          <button @click="handleShare(festival)" class="btn share">
+           </button>
+          <button  class="btn share">
             Share
           </button>
-          <button @click="navigateToDetails(festival.id)" class="btn learn-more">
+          <button  class="btn learn-more">
             Learn More
           </button>
         </div>

@@ -32,7 +32,7 @@ class Admin extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title'             => 'required|string|max:255',
-            'picture'           => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'picture'           => 'nullable|string|max:255',
             'organizer'         => 'nullable|string|max:255',
             'event_date'        => 'nullable|date',
             'event_date_start'  => 'nullable|date|after_or_equal:event_date',
@@ -48,56 +48,104 @@ class Admin extends Controller
             ], 422);
         }
     
-        // Handle image upload (if needed)
-        $imagePath = null;
-        if ($request->hasFile('picture')) {
-            $imagePath = $request->file('picture')->store('car_shows', 'public');
+        try {
+            // Handle image upload (if needed)
+            $imagePath = null;
+            if ($request->hasFile('picture')) {
+                $imagePath = $request->file('picture')->store('car_shows', 'public');
+            }
+    
+            $carShow = CarShow::create([
+                'title'             => $request->title,
+                'picture'           => $imagePath,
+                'organizer'         => $request->organizer,
+                'event_date'        => $request->event_date,
+                'event_date_start'  => $request->event_date_start,
+                'event_date_end'    => $request->event_date_end,
+                'location'          => $request->location,
+                'description'       => $request->description,
+            ]);
+    
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Car show created successfully',
+                'data' => $carShow,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
         }
-    
-        $carShow = CarShow::create([
-            'title'             => $request->title,
-            'picture'           => $imagePath,
-            'organizer'         => $request->organizer,
-            'event_date'        => $request->event_date,
-            'event_date_start'  => $request->event_date_start,
-            'event_date_end'    => $request->event_date_end,
-            'location'          => $request->location,
-            'description'       => $request->description,
-        ]);
-    
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Car show created successfully',
-            'data' => $carShow,
-        ], 201);
     }
+
     public function edit(CarShow $carShow)
     {
         return view('admin.car_shows.edit', compact('carShow'));
     }
 
-    public function update(Request $request, CarShow $carShow)
+    public function update(Request $request, CarShow $carShow, $id)
     {
-        $request->validate([
-                'title'            => 'required|string|max:255',
-                'picture'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:8192',
-                'organizer'        => 'nullable|string|max:255',
-                'event_date'       => 'nullable|date',
-                'event_date_start' => 'nullable|date|after_or_equal:event_date',
-                'event_date_end'   => 'nullable|date|after_or_equal:event_date_start',
-                'location'         => 'required|string|max:255',
-                'description'      => 'nullable|string',   
+        $validator = Validator::make($request->all(), [
+            'title'            => 'required|string|max:255',
+            'picture'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:8192',
+            'organizer'        => 'nullable|string|max:255',
+            'event_date'       => 'nullable|date',
+            'event_date_start' => 'nullable|date|after_or_equal:event_date',
+            'event_date_end'   => 'nullable|date|after_or_equal:event_date_start',
+            'location'         => 'required|string|max:255',
+            'description'      => 'nullable|string',
         ]);
+        
 
-        $carShow->update($request->all());
-
-        return redirect()->route('admin.car-shows.index')->with('success', 'Car show updated!');
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+        $carShow = CarShow::findOrFail($id);
+        // Handle image upload (if needed)
+        try {
+            $carShow->update($request->all());
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Car show updated successfully',
+                'data' => $carShow,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
-    public function destroy(CarShow $carShow)
+    public function destroy($id)
     {
-        $carShow->delete();
-        return redirect()->route('admin.car-shows.index')->with('success', 'Car show deleted!');
+        try {
+            $carShow = CarShow::findOrFail($id);
+            $carShow->delete();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Car show deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getAllCarShows()
+    {
+        try {
+            $carShows = CarShow::all();
+            return response()->json($carShows, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
 
