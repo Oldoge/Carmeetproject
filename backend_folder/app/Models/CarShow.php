@@ -16,4 +16,6 @@ class CarShow extends Model
         'location',
         'description'
     ];
+
+    
 }

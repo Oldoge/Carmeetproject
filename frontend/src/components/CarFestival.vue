@@ -9,11 +9,11 @@ type Festival = {
   id: number;
   title: string;
   organizer: string;
-  dates: string;
+  event_date: string;
   time: string;
   location: {
     venue: string;
-    address: string;
+    location: string;
     city: string;
   };
   description: string;
@@ -52,15 +52,14 @@ onMounted(async () => {
 
           <div class="info-section">
             <h3>When</h3>
-            <p>{{ festival.dates }}</p>
+            <p>{{ festival.event_date }}</p>
             <p>{{ festival.time }}</p>
           </div>
 
           <div class="info-section">
             <h3>Where</h3>
-            <p>{{ festival.location.venue }}</p>
-            <p>{{ festival.location.address }}</p>
-            <p>{{ festival.location.city }}</p>
+            <p>{{ festival.location }}</p>
+
           </div>
 
           <div class="info-section">

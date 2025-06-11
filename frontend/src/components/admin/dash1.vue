@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'; // Added onMounted
+import { ref, onMounted, computed } from 'vue'; // Added computed
 import axios from 'axios';
 
 const carshow = ref([]);
@@ -126,6 +126,70 @@ const confirmDeleteCarShow = async () => {
   }
 };
 
+const sortField = ref('title');
+const sortDirection = ref('asc');
+
+const sortOptions = [
+  { value: 'title', label: 'Title' },
+  { value: 'organizer', label: 'Organizer' },
+  { value: 'event_date', label: 'Event Date' },
+  { value: 'event_date_start', label: 'Event Start Date' },
+  { value: 'event_date_end', label: 'Event End Date' },
+  { value: 'location', label: 'Location' }
+];
+
+const sortedCarshow = computed(() => {
+  const arr = [...carshow.value];
+  arr.sort((a, b) => {
+    const field = sortField.value;
+    let valA = a[field] || '';
+    let valB = b[field] || '';
+    // Convert to lowercase for string comparison
+    if (typeof valA === 'string') valA = valA.toLowerCase();
+    if (typeof valB === 'string') valB = valB.toLowerCase();
+    if (valA < valB) return sortDirection.value === 'asc' ? -1 : 1;
+    if (valA > valB) return sortDirection.value === 'asc' ? 1 : -1;
+    return 0;
+  });
+  return arr;
+});
+
+const searchQuery = ref('');
+const searchInput = ref('');
+const doSearch = () => {
+  searchQuery.value = searchInput.value;
+};
+
+const filteredCarshow = computed(() => {
+  if (!searchQuery.value.trim()) return sortedCarshow.value;
+  const q = searchQuery.value.trim().toLowerCase();
+  return sortedCarshow.value.filter(show =>
+    Object.values(show)
+      .filter(val => typeof val === 'string' || typeof val === 'number')
+      .some(val => String(val).toLowerCase().includes(q))
+  );
+});
+
+// Group car shows by organizer and count them
+const groupedByOrganizer = computed(() => {
+  const groups = {};
+  filteredCarshow.value.forEach(show => {
+    const org = show.organizer || 'Unknown';
+    if (!groups[org]) {
+      groups[org] = { count: 0, shows: [] };
+    }
+    groups[org].count++;
+    groups[org].shows.push(show);
+  });
+  return groups;
+});
+
+// Example: total number of car shows
+const totalCarShows = computed(() => filteredCarshow.value.length);
+
+// Example: total number of unique organizers
+const totalOrganizers = computed(() => Object.keys(groupedByOrganizer.value).length);
+
 // Fetch data when the component is mounted
 onMounted(() => {
     fetchCarshow();
@@ -136,7 +200,38 @@ onMounted(() => {
  <main>
     <div>
         <h1>This is the table</h1>
-        <button @click="toggleAddCarshow">Add Car Show</button> <!-- Fixed v-model typo -->
+        <button @click="toggleAddCarshow">Add Car Show</button>
+        <!-- Sort Filter UI -->
+        <div style="margin: 1rem 0; color: black;">
+          <label  for="sort-field">Sort by:</label>
+          <select id="sort-field" v-model="sortField">
+            <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <select v-model="sortDirection">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+        <!-- Search UI -->
+        <div style="margin: 1rem 0;">
+          <input
+            type="text"
+            v-model="searchInput"
+            placeholder="Search car shows..."
+            style="width: 300px; padding: 8px;"
+          />
+          <button @click="doSearch" style="margin-left: 8px;">Search</button>
+        </div>
+        <!-- Calculations and Grouping Display -->
+        <div style="margin: 1rem 0; color: black;">
+          <strong>Total Car Shows:</strong> {{ totalCarShows }}<br>
+          <strong>Total Organizers:</strong> {{ totalOrganizers }}
+          <div v-for="(group, organizer) in groupedByOrganizer" :key="organizer" style="margin-top: 0.5rem;">
+            <strong>{{ organizer }}:</strong> {{ group.count }} car show(s)
+          </div>
+        </div>
         <table class="table">
             <thead>
                 <tr class="thshit">
@@ -152,7 +247,7 @@ onMounted(() => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="show in carshow" :key="show.id" class="thshit">
+                <tr v-for="show in filteredCarshow" :key="show.id" class="thshit">
                     <td>{{ show.title }}</td>
                     <td>
                         <img v-if="show.picture" :src="show.picture" alt="Event Picture" style="max-width: 100px; max-height: 100px;">

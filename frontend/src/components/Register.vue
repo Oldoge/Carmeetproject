@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
 import { useToast } from 'vue-toastification'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const toast = useToast()
 
 const formData = ref({
@@ -13,7 +11,7 @@ const formData = ref({
   password: '',
   confirmPassword: '',
   name: '',
-  role: 'user' as 'organizer' | 'user',
+  role: 'user' as 'user' | 'organizer',
   organization: ''
 })
 
@@ -21,43 +19,76 @@ const errors = ref<Record<string, string>>({})
 
 const validateForm = () => {
   errors.value = {}
-  
+
   if (!formData.value.email) {
     errors.value.email = 'Email is required'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)) {
     errors.value.email = 'Invalid email format'
   }
-  
+
   if (!formData.value.password) {
     errors.value.password = 'Password is required'
   } else if (formData.value.password.length < 8) {
     errors.value.password = 'Password must be at least 8 characters'
   }
-  
+
   if (formData.value.password !== formData.value.confirmPassword) {
     errors.value.confirmPassword = 'Passwords do not match'
   }
-  
+
   if (!formData.value.name) {
     errors.value.name = 'Name is required'
   }
-  
+
+  if (!formData.value.role) {
+    errors.value.role = 'Role is required'
+  }
+
   if (formData.value.role === 'organizer' && !formData.value.organization) {
     errors.value.organization = 'Organization is required for organizers'
   }
-  
+
   return Object.keys(errors.value).length === 0
 }
 
 const handleRegister = async () => {
   if (!validateForm()) return
-  
+
+  // Prepare payload for API
+  const payload = {
+    name: formData.value.name,
+    email: formData.value.email,
+    password: formData.value.password,
+    password_confirmation: formData.value.confirmPassword,
+    role: formData.value.role,
+    organization: formData.value.role === 'organizer' ? formData.value.organization : null,
+  }
+
   try {
-    await authStore.register(formData.value)
+    const res = await fetch('http://127.0.0.1:8000/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      if (data.errors) {
+        // Laravel validation errors
+        Object.keys(data.errors).forEach(key => {
+          errors.value[key] = data.errors[key][0]
+        })
+      } else if (data.message) {
+        toast.error(data.message)
+      }
+      return
+    }
+
     toast.success('Registration successful! Please log in.')
     router.push('/login')
-  } catch (error) {
-    toast.error(error instanceof Error ? error.message : 'Registration failed')
+  } catch (error: any) {
+    toast.error(error?.message || 'Registration failed')
   }
 }
 </script>
@@ -121,6 +152,7 @@ const handleRegister = async () => {
             <option value="user">Regular User</option>
             <option value="organizer">Organizer</option>
           </select>
+          <span class="error-message" v-if="errors.role">{{ errors.role }}</span>
         </div>
 
         <div class="form-group" v-if="formData.role === 'organizer'">

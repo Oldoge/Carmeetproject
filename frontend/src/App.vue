@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const isLoggedIn = ref(false)
 const router = useRouter()
 
+function checkLogin() {
+  isLoggedIn.value = !!localStorage.getItem('token')
+}
+
+onMounted(() => {
+  checkLogin()
+})
+
 const logout = () => {
-  isLoggedIn.value = false
+  localStorage.removeItem('token')
+  checkLogin()
   router.push('/login')
 }
 </script>
@@ -16,12 +25,17 @@ const logout = () => {
     <nav class="navigation">
       <router-link to="/" class="nav-brand">MotorMania 2024</router-link>
       <div class="nav-links">
-        <router-link to="/about-me" class="nav-link">About Me</router-link>
-        <template v-if="!isLoggedIn">
+        <template v-if="isLoggedIn">
+          <!-- Navigation for logged-in user -->
+          <router-link to="/dashboard" class="nav-link">Dashboard</router-link>
+          <button @click="logout" class="nav-link logout">Logout</button>
+        </template>
+        <template v-else>
+          <!-- Navigation for guest -->
+          <router-link to="/about-me" class="nav-link">About Me</router-link>
           <router-link to="/login" class="nav-link">Login</router-link>
           <router-link to="/register" class="nav-link">Register</router-link>
         </template>
-        <button v-else @click="logout" class="nav-link logout">Logout</button>
       </div>
     </nav>
     <router-view v-slot="{ Component }">

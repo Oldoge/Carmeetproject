@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
 
 const email = ref('')
@@ -8,17 +9,29 @@ const password = ref('')
 const router = useRouter()
 const authStore = useAuthStore()
 
-const handleLogin = () => {
-  const success = authStore.login(email.value, password.value)
-  if (success) {
+const handleLogin = async () => {
+  try {
+    const response = await axios.post('http://127.0.0.1:8000/api/login', {
+      email: email.value,
+      password: password.value,
+    })
+
+    const user = response.data.user
+    authStore.user = user        // store user data in your store
+    
+
     if (authStore.isAdmin) {
-      router.push('/admin')
+      router.push('/adminDash')
     } else {
       router.push('/')
     }
+  } catch (error) {
+    const err = error as any
+    alert('Login failed: ' + (err.response?.data?.message || 'Unknown error'))
   }
 }
 </script>
+
 
 <template>
   <div class="auth-container">
