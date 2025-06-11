@@ -103,7 +103,7 @@ A web application for managing car shows, built with Vue 3 (frontend) and Larave
    - Configure `.env` and database
    - Run migrations: `php artisan migrate`
    - Start server: 
-   - Windows: cd `...\backend_folder ``php artisan serve`
+   - Windows: cd `...\backend_folder ` && `php artisan serve`
    - macOS/Linux: cd `...\backend_folder` && `php artisan serve`
 
 2. **Frontend**

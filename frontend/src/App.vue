@@ -23,7 +23,7 @@ const logout = () => {
 <template>
   <div class="app-container">
     <nav class="navigation">
-      <router-link to="/" class="nav-brand">MotorMania 2024</router-link>
+      <router-link to="/" class="nav-brand">WroomWroomMe</router-link>
       <div class="nav-links">
         <template v-if="isLoggedIn">
           <!-- Navigation for logged-in user -->
